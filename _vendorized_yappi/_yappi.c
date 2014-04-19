@@ -113,6 +113,7 @@ PyStr_FromFormat(const char *fmt, ...)
 #else
     ret = PyString_FromFormatV(fmt, vargs);
 #endif
+    va_end(vargs);
     return ret;
 }
 
@@ -405,21 +406,25 @@ _code2pit(PyFrameObject *fobj)
     PyFrame_FastToLocals(fobj);
     if (cobj->co_argcount) {
         const char *firstarg = PyStr_AS_CSTRING(PyTuple_GET_ITEM(cobj->co_varnames, 0));
+        PyObject *self, *cls, *name;
 
-        if (!strcmp(firstarg, "self")) {
-            PyObject* locals = fobj->f_locals;
-            if (locals) {
-                PyObject* self = PyDict_GetItemString(locals, "self");
-                if (self) {
-                    PyObject *as = PyObject_GetAttrString(self, "__class__");
-                    if (as) {
-                        as = PyObject_GetAttrString(as, "__name__");                    
-                        pit->name = PyStr_FromFormat("%s.%s", PyStr_AS_CSTRING(as), PyStr_AS_CSTRING(cobj->co_name));
-                    }
-                }
-            }
+        if (strcmp(firstarg, "self") ||
+            !fobj->f_locals ||
+            !(self = PyDict_GetItemString(fobj->f_locals, "self")) || /* borrowed ref */
+            !(cls = PyObject_GetAttrString(self, "__class__")) /* new ref */
+           ) {
+            goto out;
         }
+        name = PyObject_GetAttrString(cls, "__name__"); /* new ref */
+        Py_DECREF(cls);
+        if (!name) {
+            goto out;
+        }
+        pit->name = PyStr_FromFormat("%s.%s", PyStr_AS_CSTRING(name), PyStr_AS_CSTRING(cobj->co_name)); /* new ref */
+        Py_DECREF(name);
     }
+
+out:
     if (!pit->name) {
         pit->name = PyStr_FromString(PyStr_AS_CSTRING(cobj->co_name));
     }
