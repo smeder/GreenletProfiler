@@ -7,6 +7,7 @@ import _vendorized_yappi
 from _vendorized_yappi.yappi import (
     is_running, convert2pstats, get_func_stats, get_thread_stats, clear_stats,
     set_clock_type, get_clock_type, get_mem_usage)
+from functools import wraps
 
 
 __all__ = [
@@ -14,6 +15,22 @@ __all__ = [
     'is_running', 'get_clock_type', 'set_clock_type', 'get_mem_usage',
     'convert2pstats',
 ]
+
+
+def greenlet_profile(name, clock_type='cpu', save_type='callgrind'):
+    def outer(func):
+        @wraps(func)
+        def inner(*args, **kwargs):
+            set_clock_type(clock_type)
+            start()
+            retval = func(*args, **kwargs)
+            stop()
+            stats = get_func_stats()
+            stats.save(name, type=save_type)
+            return retval
+        return inner
+    return outer
+
 
 def start(builtins=False, profile_threads=True):
     """Starts profiling all threads and all greenlets.
