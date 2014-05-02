@@ -63,6 +63,7 @@ def stop():
 
 def main():
     from optparse import OptionParser
+    import atexit
 
     usage = "python -m greenlet_profiler [-b] [-s] [scriptfile] args ..."
     parser = OptionParser(usage=usage)
@@ -79,6 +80,12 @@ def main():
         default=False,
         help="Profiles only the thread that calls start(). [default: False]")
 
+    parser.add_option(
+        "-l", "--log-file",
+        dest="log_file",
+        default=None,
+        help="Log file name")
+
     clock_types = ['wall', 'cpu']
     parser.add_option(
         "-c", "--clock_type",
@@ -94,18 +101,27 @@ def main():
         sys.path.insert(0, os.path.dirname(args[0]))
         set_clock_type(options.clock_type)
         start(options.profile_builtins, not options.profile_single_thread)
+        atexit.register(cleanup, options)
         if sys.version_info >= (3, 0):
             exec (compile(open(args[0]).read(), args[0], 'exec'),
                   sys._getframe(1).f_globals, sys._getframe(1).f_locals)
         else:
-            execfile(args[0], sys._getframe(1).f_globals,
-                     sys._getframe(1).f_locals)
-        stop()
-        get_func_stats().print_all()
-        get_thread_stats().print_all()
+            execfile(args[0], {}, {})
+            #execfile(args[0], sys._getframe(1).f_globals,
+            #         sys._getframe(1).f_locals)
     else:
         parser.print_usage()
         sys.exit(2)
+
+
+def cleanup(options):
+    stop()
+    stats = get_func_stats()
+    if options.log_file:
+        stats.save(options.log_file, type='callgrind')
+    else:
+        stats.print_all()
+        get_thread_stats().print_all()
 
 if __name__ == "__main__":
     main()
