@@ -1,4 +1,4 @@
-import os
+vimport os
 import sys
 
 import greenlet
@@ -106,9 +106,10 @@ def main():
             exec (compile(open(args[0]).read(), args[0], 'exec'),
                   sys._getframe(1).f_globals, sys._getframe(1).f_locals)
         else:
-            execfile(args[0], {}, {})
-            #execfile(args[0], sys._getframe(1).f_globals,
-            #         sys._getframe(1).f_locals)
+            sys.argv = args
+            #execfile(args[0], {}, {})
+            execfile(args[0], sys._getframe(1).f_globals,
+                     sys._getframe(1).f_locals)
     else:
         parser.print_usage()
         sys.exit(2)
