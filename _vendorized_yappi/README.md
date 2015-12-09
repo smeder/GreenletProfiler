@@ -1,6 +1,8 @@
-===============================
+
 Yappi
-===============================
+===================
+
+[![Build Status](https://drone.io/bitbucket.org/sumerc/yappi/status.png)](https://drone.io/bitbucket.org/sumerc/yappi/latest)
 
 Motivation:
 ===================
@@ -18,6 +20,9 @@ powerful requirements.
 
 Features:
 ===================
+* Ability to analyze per-thread information. (*new in 0.94*)
+* Ability to hook underlying threading model events/properties. (*new in 0.92*)
+* Decorator to profile individual functions easily. (*new in 0.92*)
 * Profiler results can be saved in callgrind and pstat formats. (new in 0.82) 
 * Profiler results can be merged from different sessions on-the-fly. (new in 0.82)
 * Profiler results can be easily converted to pstats. (new in 0.82) 
@@ -29,7 +34,6 @@ Features:
   
 Limitations:
 ===================
-* Threads must be derived from "threading" module's Thread object.
 * Latest version of Yappi supports Python 2.6.x <= x <= Python.3.4
 
 
