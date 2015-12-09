@@ -1482,7 +1482,7 @@ PyMODINIT_FUNC
 #ifdef IS_PY3K
 PyInit__yappi(void)
 #else
-init_yappi(void)
+init_GreenletProfiler_yappi(void)
 #endif
 {
     PyObject *m, *d;
@@ -1492,7 +1492,7 @@ init_yappi(void)
     if (m == NULL)
         return NULL;
 #else
-    m = Py_InitModule("_yappi",  yappi_methods);
+    m = Py_InitModule("_GreenletProfiler_yappi",  yappi_methods);
     if (m == NULL)
         return;
 #endif
