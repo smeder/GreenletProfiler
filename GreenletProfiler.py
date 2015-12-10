@@ -1,5 +1,6 @@
-vimport os
+import os
 import sys
+import signal
 
 import greenlet
 
@@ -86,6 +87,12 @@ def main():
         default=None,
         help="Log file name")
 
+    parser.add_option(
+        "-u", "--signals",
+        action="store_true", dest="use_signals",
+        default=False,
+        help="Uses the USR1 (start) and USR2 (stop) signals to control when profiling happens. [default: False]")
+
     clock_types = ['wall', 'cpu']
     parser.add_option(
         "-c", "--clock_type",
@@ -100,8 +107,17 @@ def main():
     if len(args) > 0:
         sys.path.insert(0, os.path.dirname(args[0]))
         set_clock_type(options.clock_type)
-        start(options.profile_builtins, not options.profile_single_thread)
-        atexit.register(cleanup, options)
+        if options.use_signals:
+            def signal_start(signal_number, frame):
+                start(options.profile_builtins, not options.profile_single_thread)
+            signal.signal(signal.SIGUSR1, signal_start)
+            
+            def signal_stop(signal_number, frame):
+                cleanup(options)
+            signal.signal(signal.SIGUSR2, signal_stop)
+        else:
+            start(options.profile_builtins, not options.profile_single_thread)
+            atexit.register(cleanup, options)
         if sys.version_info >= (3, 0):
             exec (compile(open(args[0]).read(), args[0], 'exec'),
                   sys._getframe(1).f_globals, sys._getframe(1).f_locals)
@@ -123,6 +139,7 @@ def cleanup(options):
     else:
         stats.print_all()
         get_thread_stats().print_all()
+    clear_stats()
 
 if __name__ == "__main__":
     main()

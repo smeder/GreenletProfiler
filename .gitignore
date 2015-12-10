@@ -35,3 +35,6 @@ nosetests.xml
 .project
 .pydevproject
 doc/_build
+
+.idea
+*.iml
